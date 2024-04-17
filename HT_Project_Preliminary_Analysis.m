@@ -1,6 +1,6 @@
 clear; clear all;
 % Set up problem
-air_int.T = 21.1; % Initial inside air temperature (C)
+%air_int.T = 21.1; % Initial inside air temperature (C)
 h_e_inf = 50; % Heat transfer coefficient on the exterior side (W/m^2K)
 concrete.k = 2.25; % Thermal conductivity of concrete (W/m-K)
 concrete.t = 0.1524;% Thickness of concrete part of wall (m)
@@ -24,19 +24,27 @@ R_wall = concrete.t/(concrete.k*A_wall);
 time = 0:dt:time_steps;
 T_wall_int = zeros(length(time),1);
 T_air_int = zeros(length(time),1);
+T_air_int(1) = 21.1;
 air_ext.T = linspace(26,32,length(time));     % Outside air temperature (C)
-T_wall_ext =28; % External wall temperature (C). This is another assumed value to keep 
+ % External wall temperature (C). This is another assumed value to keep 
 
+ T_wall_ext = zeros(length(time),1);
+ q_conv_ext = zeros(length(time),1);
+ q_conv_i = zeros(length(time),1);
+ q_cond_wall = zeros(length(time),1);
 %iterate
-for i = 1:length(time)
-    q_conv_i= q_gen/(4*A_wall); %Internal convective heat transfer rate
-    q_conv_ext = (T_wall_ext-air_ext.T(i))/air_ext.R; % external convective heat transfer rate
-    q_cond_wall = (T_wall_ext-T_wall_int(i))/R_wall; % Heat conduction through wall
+for i = 2:length(time)
+    T_wall_ext(i) = 28;
+     %q_gen/(4*A_wall); %Internal convective heat transfer rate
+    q_conv_ext(i) = (T_wall_ext(i)-air_ext.T(i))/air_ext.R; % external convective heat transfer rate
+    q_cond_wall(i) = q_conv_ext(i);
+    T_wall_int(i) = -q_cond_wall(i)*R_wall+T_wall_ext(i); % Heat conduction through wall
+    q_conv_i(i)= air_int.R*(T_wall_int(i)-T_air_int(i-1));
+
+    %T_wall_int(i) = air_int.R*q_conv_i(i)+T_air_int(i);
+    T_air_int(i) = T_wall_int(i)-(q_conv_i(i)*dt)*air_int.R; %This term should be making the internal temperature change
     
-    T_wall_int(i) = air_int.R*q_conv_i+air_int.T;
-    T_air_int(i) = T_wall_int(i)-(q_conv_i*dt)*air_int.R; %This term should be making the internal temperature change
-    
-    T_wall_int(i+1) = T_wall_int(i)+dt*(q_conv_i-q_cond_wall);
+    %T_wall_int(i+1) = T_wall_int(i)+dt*(q_conv_i(i)-q_cond_wall(i));
 end
 
 % Plot
