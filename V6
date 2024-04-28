@@ -235,7 +235,45 @@ for i = 1:length(time)
         Kps = q_conv_ext*wall.A/(pcm.cp_solid*pcm.m);
     end
 end
+{%% Implement Shape Stabilized PCM Board 
+% Material Properties for pcm
+pcm.k = 0.12;                                   % Thermal conductivity of PCM (W/m-K)
+pcm.cp_sensible = 3.26;        % sensible heat capacity (k/g-K)
+pcm.cp_latent = 62.42;      % (J/g-K)
+pcm.rho = 856;              % Density of PCm(kg/m^3)
+%pcm.h = 
+%pcm.tm =
 
+% Middle Nodes for Numerical Analysis
+if pcm.transtemp < 19 + 273.15 % lower limit of phase-change transition temperature (K)
+Q.cond_pcmsensible = pcm.m*pcm.cp_sensible*(T(i-1)-T(i)) - pcm.m*pcm.cp_sensible*(T(i)-T(i+1));
+elseif pcm.transtemp > 31 + 273.15 % upper limit of phase-change transition temperature (K)
+Q.cond_pcmsensible = pcm.m*pcm.cp_sensible*(T(i-1)-T(i)) - pcm.m*pcm.cp_sensible*(T(i)-T(i+1));
+else 19+273.15 <= pcm.transtemp <= 31+273.15
+    Q.cond_pcmlatent = pcm.m*(h.liquid_pcm - h.solid_pcm);
+
+end
+
+%% Dimensions of SS-PCM Board 
+
+PCMwall.A = 1;                  % Surface area of wall (m^2)
+PCMwall.L = 1;                  % Length and height of wall (m)
+PCMwall.L_x = 1;                % length of wall in x-direction
+PCMwall.L_y = 1;                % length of wall in y-direction
+
+%% Calculating PCM mass in Shape-Stablized PCM Board
+pcm.t = 0.0254;                                 % Thickness of PCM layer (m)
+pcm.percent = 0.6;                               % Volume percent for pcm
+
+pcm.m = pcm.rho*pcm.percent*wall.A*drywall.t;    % Mass of PCM in SS-PCM wall board (kg)
+
+
+
+for i = 1:length(time)
+    if pcm.T > 298
+        Kps = q_conv_ext*wall.A/(pcm.cp_solid*pcm.m);
+    end
+end}
 %%
 function Res = wall_q_calc(T_3, rink, roof, amb, sigma)
     
